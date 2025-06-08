@@ -1,30 +1,23 @@
+# Используем официальный образ Airflow
 FROM apache/airflow:2.9.2
 
+# Переключаемся на root для настройки
 USER root
 
-# Установка необходимых пакетов
-RUN apt-get update && \
-    apt install -y default-jdk wget && \
-    apt-get autoremove -yqq --purge && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Создаем директории для DAGs и вашего проекта
+RUN mkdir -p /opt/airflow/dags /opt/airflow/etl_project
 
-# Установка Spark
-RUN wget https://archive.apache.org/dist/spark/spark-3.4.2/spark-3.4.2-bin-hadoop3.tgz && \
-    mkdir -p /opt/spark && \
-    tar -xvf spark-3.4.2-bin-hadoop3.tgz -C /opt/spark && \
-    rm spark-3.4.2-bin-hadoop3.tgz
-
-# Настройка переменных окружения
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-ENV SPARK_HOME=/opt/spark/spark-3.4.2-bin-hadoop3
-ENV PATH=$PATH:$JAVA_HOME/bin:$SPARK_HOME/bin
-ENV PYTHONPATH=$SPARK_HOME/python/lib/py4j-0.10.9.7-src.zip
-
-# Копирование и установка Python зависимостей
-COPY requirements.txt /requirements.txt
-RUN chmod 777 /requirements.txt
-
+# Возвращаемся к пользователю airflow
 USER airflow
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r /requirements.txt
+
+# Инициализируем БД, создаем пользователя и запускаем веб-сервер
+CMD bash -c "\
+  airflow db init && \
+  airflow users create \
+    --username admin \
+    --password admin \
+    --firstname Admin \
+    --lastname User \
+    --role Admin \
+    --email admin@example.com && \
+  airflow webserver"
