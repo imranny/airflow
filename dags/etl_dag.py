@@ -24,14 +24,11 @@ with DAG(
         auto_remove=True,
         command='poetry run python main.py',
         docker_url="unix://var/run/docker.sock",
-        network_mode="bridge",
+        network_mode="airflow_etl_network",
         working_dir="/app",
         mount_tmp_dir=False,
         mounts=[
-            Mount(
-                source="/home/imran/etl_project",
-                target="/app",
-                type="bind"
-            )
-        ]
+            Mount(source="/home/imran/etl_project", target="/app", type="bind")
+        ],
+        environment={"POSTGRES_HOST": "postgres"}  
     )
